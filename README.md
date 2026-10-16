@@ -1,207 +1,113 @@
+# large-language-models
 
-  `content`: RAG
+Learning how modern LLM systems work by building the pieces from scratch: tokenizers, transformers, embeddings, vector search, and a full RAG pipeline with a chat UI.
 
-A practical journey into understanding how modern AI systems work. This repository contains implementations of transformers, RAG systems, and embedding models built from the ground up.
+![Python](https://img.shields.io/badge/Python-3.10+-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-ee4c2c) ![FAISS](https://img.shields.io/badge/FAISS-vector%20search-green) ![ChromaDB](https://img.shields.io/badge/ChromaDB-persistent%20store-orange) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-<div align=\"center\">
+## What's inside
 
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat&logo=numpy&logoColor=white)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=flat&logo=tensorflow&logoColor=white)
-![Hugging Face](https://img.shields.io/badge/Hugging%20Face-FFD21E?style=flat&logo=huggingface&logoColor=black)
-![Ollama](https://img.shields.io/badge/Ollama-000000?style=for-the-badge&logo=ollama&logoColor=white)
+| Area | What it covers |
+|---|---|
+| **Transformer fundamentals** | Attention, positional encoding, encoder-decoder, forward/backward propagation, written without high-level APIs |
+| **Tokenization & cleaning** | Custom tokenizer and text preprocessing pipeline |
+| **RAG (library)** | Document store, sentence-transformer embeddings, FAISS index, prompt builder |
+| **RAG-GPT (app)** | FastAPI backend + single-page chat UI, upload docs and chat with them, persisted in ChromaDB |
+| **Local LLM** | TinyLlama 1.1B for fully local generation |
 
-</div>
+## Repo layout
 
-## Overview
+```
+large-language-models/
+├── part-one.py            # Transformer fundamentals
+├── encoder-decoder.py     # Seq2seq / encoder-decoder transformer
+├── propagation.py         # Forward & backward propagation from scratch
+├── tokenizer.py           # Custom tokenizer
+├── cleaning.py            # Text preprocessing
+├── rag/
+│   ├── document.py        # Document data structures
+│   ├── embeddings.py      # Sentence-transformer embeddings (384-dim)
+│   ├── vector_store.py    # FAISS vector index
+│   ├── rag_model.py       # End-to-end RAG pipeline
+│   ├── main.py            # Usage example
+│   ├── requirements.txt
+│   └── rag-gpt/
+│       ├── main.py        # FastAPI backend
+│       ├── index.html     # Chat frontend
+│       ├── uploaded_docs/ # Your uploaded documents
+│       └── vector_db/     # ChromaDB storage (auto-created)
+└── tiny-llama-1.1B/       # Local model files
+```
 
-This repository explores the fundamental concepts behind large language models through hands-on implementation. Rather than relying on high-level APIs, each component is built to understand the underlying mechanics.
+## Quickstart
 
-## What's Included
-
-### Transformer Architecture
-Complete implementation of encoder-decoder transformers with custom attention mechanisms, positional encoding, and training pipelines.
-
-### RAG System
-Full implementation of Retrieval-Augmented Generation with document management, metadata tracking, and flexible retrieval using sentence transformers and FAISS.
-
-### Core Components
-- Custom tokenization pipelines
-- Text preprocessing and cleaning utilities
-- Embedding generation and vector search
-- Document retrieval systems
-
-## Technologies Used
-
-<div align=\"center\">
-
-| Tool | Purpose |
-|------|---------|
-| ![Python](https://img.shields.io/badge/-Python-3776AB?style=flat&logo=python&logoColor=white) | Primary programming language |
-| ![PyTorch](https://img.shields.io/badge/-PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white) | Neural network framework |
-| ![TensorFlow](https://img.shields.io/badge/-TensorFlow-FF6F00?style=flat&logo=tensorflow&logoColor=white) | Deep learning backend |
-| ![Hugging Face](https://img.shields.io/badge/-Transformers-FFD21E?style=flat&logo=huggingface&logoColor=black) | Pre-trained models |
-| ![NumPy](https://img.shields.io/badge/-NumPy-013243?style=flat&logo=numpy&logoColor=white) | Numerical computations |
-| ![FAISS](https://img.shields.io/badge/-FAISS-00ADD8?style=flat) | Vector similarity search |
-
-
-</div>
-
-## Getting Started
-
-**Clone the repository**
 ```bash
 git clone https://github.com/MKarthik730/large-language-models.git
 cd large-language-models
+python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r rag/requirements.txt
 ```
 
-**Install dependencies**
-```bash
-pip install torch sentence-transformers faiss-cpu numpy transformers
-```
+**RAG library example**
 
-**Run the RAG example**
 ```bash
 cd rag
 python main.py
 ```
 
-## Project Structure
+**RAG-GPT chat app**
 
-```
-transformer/
-│
-├── rag/
-│   ├── document.py          Document data structures
-│   ├── embeddings.py        Sentence transformer embeddings
-│   ├── vector_store.py      FAISS vector database
-│   ├── rag_model.py         Complete RAG pipeline
-│   ├── main.py              Usage examples
-│   └── requirements.txt     Dependencies
-|     └──rag-gpt/
-          ├── main.py              ← FastAPI backend
-          ├── index.html           ← Frontend chat UI
-          ├── uploaded_docs/       ← Your uploaded documents stored here
-          ├── vector_db/           ← ChromaDB vector storage (auto-created)
-          │   └── croma.sqlite3   ← Persistent vector database
-          ├── venv/                ← Python virtual environment
-          └── README.md
-│     └── tiny-llama-1.1B/
-├── part-one.py              Transformer fundamentals
-├── encoder-decoder.py       Sequence-to-sequence models
-├── tokenizer.py             Custom tokenization
-└── cleaning.py              Data preprocessing
+```bash
+cd rag/rag-gpt
+uvicorn main:app --reload
+# open http://127.0.0.1:8000
 ```
 
-## How RAG Works
-
-The retrieval-augmented generation system follows this workflow:
-
-1. **Document Indexing**: Convert documents into 384-dimensional vectors using sentence transformers
-2. **Storage**: Store vectors in FAISS index for efficient similarity search
-3. **Query Processing**: Convert user questions into vectors using the same model
-4. **Retrieval**: Find the most similar documents using cosine similarity
-5. **Prompt Generation**: Format retrieved documents as context for language models
-6. **Answer Generation**: Send prompt to LLM for final response
-
-## Quick Example
+## Usage
 
 ```python
 from rag import RAGModel
 
-# Setup
 rag = RAGModel()
+rag.add_documents([
+    "Python is a high-level programming language",
+    "Machine learning models learn patterns from data",
+    "Transformers use attention mechanisms for NLP",
+])
 
-# Index your documents
-docs = [
-    \"Python is a high-level programming language\",
-    \"Machine learning models learn patterns from data\",
-    \"Transformers use attention mechanisms for NLP\"
-]
-rag.add_documents(docs)
+result = rag.query("What is machine learning?", top_k=2)
 
-# Ask questions
-result = rag.query(\"What is machine learning?\", top_k=2)
-
-# Get formatted prompt
-print(result['prompt'])
-
-# See retrieved sources
-for doc in result['retrieved_documents']:
-    print(f\"- {doc.text}\")
+print(result["prompt"])                      # prompt ready for an LLM
+for doc in result["retrieved_documents"]:    # sources used
+    print("-", doc.text)
 ```
 
-## Key Features
+## How the RAG pipeline works
 
-**Modular Design**: Each component is self-contained and easy to understand
+```
+documents ─► embed (384-d) ─► vector index ─┐
+                                            ├─► top-k similar chunks ─► prompt ─► LLM ─► answer
+question  ─► embed (same model) ────────────┘
+```
 
-**No Black Boxes**: Full visibility into how embeddings, retrieval, and generation work
-
-**Production Ready**: Code follows best practices and includes error handling
-
-**Extensible**: Easy to swap embedding models, vector stores, or add new features
-
-## Learning Path
-
-This repository was built while studying:
-- Attention mechanisms and transformer architecture
-- Vector embeddings and semantic search
-- Retrieval-augmented generation patterns
-- Production ML system design
-
-## Frameworks and Libraries
-
-**Core ML**
-- PyTorch for neural network operations
-- TensorFlow for additional deep learning capabilities
-- Sentence Transformers for text embeddings
-
-**Vector Search**
-- FAISS for efficient similarity search
-- Support for millions of vectors with minimal latency
-
-**NLP Tools**
-- Hugging Face Transformers for pre-trained models
-- Custom tokenization pipelines
-- Text preprocessing utilities
-
-**Data Processing**
-- NumPy for numerical operations
-- Custom cleaning and formatting tools
+1. **Index**: embed documents with a sentence-transformer
+2. **Store**: keep vectors in FAISS (library) or ChromaDB (RAG-GPT app, persistent)
+3. **Retrieve**: embed the query with the same model, rank by cosine similarity
+4. **Generate**: inject retrieved context into the prompt and send it to the LLM
 
 ## Roadmap
 
-- [ ] Add support for multiple embedding models
-- [ ] Implement hybrid search (keyword + semantic)
-- [ ] Build evaluation metrics for retrieval quality
-- [ ] Add LLM integration examples
-- [ ] Create chunking strategies for long documents
-- [ ] Implement re-ranking mechanisms
+- [ ] Chunking strategies for long documents
+- [ ] Hybrid search (BM25 + semantic)
+- [ ] Re-ranking (cross-encoder)
+- [ ] Retrieval evaluation (recall@k, MRR)
+- [ ] Multiple embedding models, swappable via config
+- [ ] LLM integration examples (Ollama, TinyLlama)
+- [ ] Tests + CI (GitHub Actions)
 
 ## Contributing
 
-This is a learning project, but contributions are welcome. Feel free to:
-- Report bugs or issues
-- Suggest improvements
-- Share alternative implementations
-- Add documentation
+Learning project, but issues and PRs are welcome: bug reports, alternative implementations, docs.
 
 ## License
 
-MIT License - Use freely for learning and experimentation
-
-## Acknowledgments
-
-Built while exploring the technologies behind modern AI systems. Special thanks to the open-source community for tools like PyTorch, Hugging Face, and FAISS.
-
----
-
-<div align=\"center\">
-
-**Learning by building, one model at a time**
-
-</div>
-`,
-  `path`: `C:\\Users\\Karthik\\.vscode\\project_k\	ransformer\\README.md`
-}
+MIT
