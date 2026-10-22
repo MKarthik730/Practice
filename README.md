@@ -1,70 +1,112 @@
-# Large Language Models: Learning and Practical Workflows
+# Large Language Models
 
-This repository combines small educational implementations with reusable
-Kaggle/Colab notebooks for model inference, fine-tuning, and retrieval.
+An educational repository for understanding language models by building and
+running their components: transformer fundamentals, a small from-scratch
+training pipeline, retrieval-augmented generation (RAG), and hosted inference
+notebooks.
 
-## Contents
+## What’s here
 
-- `notebooks/01-kaggle-colab-model-inference.ipynb` — load a Hugging Face
-  causal language model or call an Ollama model, test generation, and
-  optionally expose a bearer-token-protected API through ngrok or Cloudflare
-  Tunnel.
-- `notebooks/02-kaggle-colab-lora-finetuning.ipynb` — supervised LoRA/QLoRA
-  fine-tuning for compatible Hugging Face causal language models.
-- `notebooks/03-rag-retrieval-techniques.ipynb` — compare BM25, TF-IDF, dense,
-  and hybrid retrieval in the local RAG package.
-- `training/` — original small decoder-only Transformer with plain-text
-  pretraining, prompt/response SFT, checkpointing, generation, CPU tests, and
-  Kaggle/Colab notebooks.
-- `rag/` — sparse and dense retrieval, hybrid RRF ranking, optional
-  cross-encoder reranking, and index persistence.
-- `part-one.py`, `encoder-decoder.py`, `tokenizer.py`, and `cleaning.py` —
-  standalone learning examples.
+| Area | Contents |
+| --- | --- |
+| From-scratch training | A small decoder-only Transformer, UTF-8 byte tokenizer, next-token pretraining, supervised fine-tuning (SFT), checkpoints, and text generation in [`training/`](training/README.md). |
+| Kaggle and Colab | Notebooks for Hugging Face/Ollama inference and tunnels, Hugging Face LoRA/QLoRA fine-tuning, RAG retrieval, from-scratch pretraining, and SFT. |
+| RAG | Sparse BM25 and TF-IDF, dense FAISS search, hybrid reciprocal-rank fusion, optional cross-encoder reranking, and persistence. See [`rag/README.md`](rag/README.md). |
+| Fundamentals | Transformer and encoder-decoder examples, a tokenizer example, data cleaning, and forward/backward propagation. |
+| RAG-GPT app | A separate FastAPI-based document chat example in `rag/rag-gpt/`. |
 
-## Notebook use
+## Repository layout
 
-Open the notebooks in Kaggle or Google Colab, select a GPU runtime when
-available, then run the cells in order. For gated Hugging Face repositories,
-add a read-only Hugging Face token to the platform's notebook secrets; never
-write credentials into notebook cells or outputs.
+```text
+.
+├── notebooks/
+│   ├── 01-kaggle-colab-model-inference.ipynb
+│   ├── 02-kaggle-colab-lora-finetuning.ipynb
+│   └── 03-rag-retrieval-techniques.ipynb
+├── training/
+│   ├── configs/small.json
+│   ├── notebooks/                 # from-scratch pretraining and SFT
+│   ├── scripts/                   # train, fine-tune, generate
+│   ├── tests/
+│   └── model.py, data.py, engine.py, tokenizer.py, checkpoint.py
+├── rag/
+│   ├── rag_model.py
+│   ├── sparse_retriever.py
+│   ├── vector_store.py
+│   └── rag-gpt/                   # separate web app
+├── tests/
+├── cleaning.py
+├── encoder-decoder.py
+├── part-one.py
+├── propagation.py
+└── tokenizer.py
+```
 
-The inference notebook accepts a Hugging Face model repository ID or standard
-`huggingface.co/owner/repository` URL for `AutoModelForCausalLM`-compatible
-text-generation models, and can call an Ollama server/model. These formats are not
-interchangeable: an Ollama model or arbitrary model link may not be loadable
-by Transformers. Check the model card, license, tokenizer, architecture, and
-runtime memory requirements before downloading or fine-tuning.
+## Quick start
 
-The public tunnel cells are optional. Use the API bearer token, keep tunnel
-URLs private, stop the server when finished, and do not expose an unauthenticated
-model endpoint. Tunnel addresses are temporary and may be publicly reachable.
+Use Python 3.10+ and install the dependencies for the feature you want. PyTorch
+installation can vary by operating system and CUDA version; choose the
+appropriate PyTorch build for your environment.
 
-Fine-tuning uses adapter-based supervised tuning to reduce memory use. It is
-not a guarantee that every architecture, dataset, or free-tier GPU fits.
-QLoRA's 4-bit path requires a compatible CUDA GPU and `bitsandbytes`; the
-notebook includes a non-quantized LoRA option. Follow the model and dataset
-licenses and Hugging Face terms.
+### From-scratch pretraining and SFT
 
-## Run the RAG example
+Install PyTorch as appropriate for your machine, then place UTF-8 training
+text in `data/train.txt` and run from the repository root:
 
-From the repository root:
+```bash
+python -m training.scripts.train_pretrain --data data/train.txt --output artifacts/base.pt --config training/configs/small.json
+```
+
+Fine-tune the checkpoint on JSONL records containing `prompt` and `response`
+strings:
+
+```bash
+python -m training.scripts.train_sft --init-checkpoint artifacts/base.pt --data data/sft.jsonl --output artifacts/sft.pt --config training/configs/small.json
+```
+
+Generate a sample:
+
+```bash
+python -m training.scripts.generate --checkpoint artifacts/sft.pt --prompt "Explain attention:" --max-new-tokens 100
+```
+
+See [`training/README.md`](training/README.md) for data format, notebook
+instructions, and limitations. This is a small educational byte-token model;
+it does not train billion-parameter models or fine-tune arbitrary Hugging Face
+or Ollama checkpoints.
+
+### RAG
+
+Install the RAG dependencies and run the example:
 
 ```bash
 python -m pip install -r rag/requirements.txt
 python -m rag.main
 ```
 
-RAG usage, retrieval options, and persistence details are in [rag/README.md](rag/README.md).
+The first dense search downloads the configured Sentence Transformers
+embedding model. The package prepares retrieved context and a prompt; connect
+that prompt to a generation model separately. See [`rag/README.md`](rag/README.md)
+for retrieval methods, reranking, and persistence.
 
-## Train a small model from scratch
+### Kaggle and Colab notebooks
 
-See [training/README.md](training/README.md) for setup, pretraining, SFT, and
-generation commands. This educational byte-token model is a separate
-from-scratch path; it does not fine-tune arbitrary Hugging Face/Ollama models.
+Open notebooks from `notebooks/` or `training/notebooks/` in Kaggle or Google
+Colab and run cells in order. Select a GPU runtime when available. The
+notebooks document their input paths, model setup, and checkpoint handling.
+Save outputs to persistent storage before the hosted runtime expires.
+
+The inference notebook supports Hugging Face repositories compatible with
+`AutoModelForCausalLM` and a reachable Ollama server/model; these are different
+formats and not every model is compatible. The LoRA/QLoRA notebook fine-tunes
+compatible Hugging Face causal LMs. Gated Hugging Face models require a token
+stored in notebook secrets. Public tunnel cells are optional: protect the
+endpoint with its bearer token, keep URLs and credentials private, and stop
+the tunnel when finished.
 
 ## Tests
 
-Run the lightweight retrieval tests from the repository root:
+Run the RAG and from-scratch training unit tests from the repository root:
 
 ```bash
 python -m unittest discover -s tests -v
@@ -73,7 +115,7 @@ python -m unittest discover -s training/tests -v
 
 ## Reference
 
-The notebook workflow and staged model-training concepts were informed by
+The staged learning path is informed by
 [train-llm-from-scratch](https://github.com/FareedKhan-dev/train-llm-from-scratch).
-This repository implements its own workflows rather than copying that
-project's source files.
+The `training/` implementation in this repository is original and is not a
+copy of that project's source.
