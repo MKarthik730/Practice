@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Any
+
 
 @dataclass
 class Document:
     id: int
     text: str
-    metadata: Optional[Dict] = None
+    metadata: dict[str, Any] | None = None

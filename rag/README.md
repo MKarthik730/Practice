@@ -1,23 +1,80 @@
-# RAG Model
+# Retrieval-Augmented Generation
 
-Simple Retrieval-Augmented Generation implementation.
+This package provides selectable sparse, dense, and hybrid document retrieval.
+The default `hybrid` path combines BM25 keyword ranking and dense embedding
+ranking with reciprocal rank fusion (RRF), so the scores from the two
+retrievers do not need to be calibrated against one another.
 
-## Installation
+## Install
+
+From the repository root:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r rag/requirements.txt
 ```
 
-## Usage
+The first use of `RAGModel` downloads the default
+`sentence-transformers/all-MiniLM-L6-v2` embedding model from Hugging Face.
+Choose an embedding model compatible with Sentence Transformers if you need to
+change it.
 
-```bash
-python main.py
+## Quick start
+
+```python
+from rag import RAGModel
+
+rag = RAGModel()
+rag.add_documents(
+    [
+        "FAISS supports efficient similarity search over dense vectors.",
+        "BM25 retrieves documents using lexical term statistics.",
+    ],
+    metadatas=[{"source": "vectors.txt"}, {"source": "search.txt"}],
+)
+
+result = rag.query("How does keyword search work?", method="hybrid", top_k=2)
+print(result["prompt"])
+print(result["sources"])
 ```
 
-## Structure
+`query` returns the retrieved `Document` objects, the retriever scores, the
+prompt text, source metadata, and the selected retrieval method. The RAG
+package prepares context; it does not call a text-generation model.
 
-- `document.py` - Document data structure
-- `embeddings.py` - Text embedding generation
-- `vector_store.py` - FAISS vector storage
-- `rag_model.py` - Main RAG implementation
-- `main.py` - Example usage
+## Retrieval methods
+
+```python
+rag.retrieve(question, method="bm25")   # Sparse BM25 keyword ranking
+rag.retrieve(question, method="tfidf")  # Sparse TF-IDF cosine similarity
+rag.retrieve(question, method="dense")  # Dense embedding cosine similarity
+rag.retrieve(question, method="hybrid") # BM25 + dense, fused with RRF
+```
+
+Optional cross-encoder reranking uses Sentence Transformers:
+
+```python
+rag = RAGModel(reranker_model="cross-encoder/ms-marco-MiniLM-L-6-v2")
+ranked = rag.retrieve(question, method="hybrid", rerank=True, top_k=3)
+```
+
+Reranking is opt-in because it adds model download, memory, and inference
+requirements. The reranker reorders the retrieved candidate set; it does not
+replace retrieval.
+
+## Persistence
+
+`save_index("artifacts/my-index")` writes a FAISS index to
+`artifacts/my-index.index` and document text/metadata to
+`artifacts/my-index.documents.json`. Metadata must be JSON-serializable.
+`load_index` expects both files and an embedding model with the same vector
+dimension used to create the index.
+
+## Limitations
+
+- This implementation is intended for learning and small local corpora. The
+  sparse index is rebuilt in memory when documents are added.
+- Dense search uses an exact FAISS inner-product index over normalized
+  embeddings; it is not an approximate or distributed vector database.
+- BM25 and TF-IDF use simple Unicode word tokenization without stemming.
+- The default prompt is a context template; connect its output to a compatible
+  chat or text-generation model yourself.

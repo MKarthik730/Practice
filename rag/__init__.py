@@ -1,4 +1,5 @@
-from rag_model import RAGModel
-from document import Document
+from .document import Document
+from .rag_model import RAGModel
+from .sparse_retriever import SparseRetriever
 
-__all__ = ['RAGModel', 'Document']
+__all__ = ["Document", "RAGModel", "SparseRetriever"]

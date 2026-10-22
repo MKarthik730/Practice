@@ -4,3 +4,7 @@ vector_db/
 uploaded_docs/
 __pycache__/
 *.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+*.index
+*.documents.json

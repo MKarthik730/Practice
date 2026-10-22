@@ -1,4 +1,4 @@
-from rag_model import RAGModel
+from rag import RAGModel
 
 def main():
     rag = RAGModel()
@@ -17,7 +17,7 @@ def main():
     rag.add_documents(documents)
     
     question = "What is machine learning?"
-    result = rag.query(question, top_k=3)
+    result = rag.query(question, top_k=3, method="hybrid")
     
     print("\n" + "="*60)
     print(f"Question: {question}")
@@ -30,6 +30,12 @@ def main():
     print("Generated Prompt:")
     print("="*60)
     print(result['prompt'])
+
+    print("\n" + "=" * 60)
+    print("Sparse BM25 results:")
+    print("=" * 60)
+    for doc in rag.retrieve(question, top_k=3, method="bm25"):
+        print(f"- {doc.text}")
 
 if __name__ == "__main__":
     main()

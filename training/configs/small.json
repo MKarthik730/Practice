@@ -1,0 +1,19 @@
+{
+  "model": {
+    "vocab_size": 260,
+    "max_seq_len": 128,
+    "d_model": 128,
+    "n_heads": 4,
+    "n_layers": 2,
+    "dropout": 0.1
+  },
+  "training": {
+    "batch_size": 8,
+    "learning_rate": 0.0003,
+    "steps": 500,
+    "eval_interval": 50,
+    "eval_batches": 5,
+    "grad_clip": 1.0,
+    "seed": 1337
+  }
+}
